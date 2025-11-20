@@ -4,8 +4,9 @@ from typing import List, Optional
 import chromadb
 from chromadb.config import Settings
 from .models import KBEntry
+import os
 
-KB_PATH = "data/knowledge_base.json"
+KB_PATH = os.path.join(os.path.dirname(__file__), "data", "knowledge_base.json")
 
 class KnowledgeBase:
     def __init__(self, path: Path = KB_PATH):
