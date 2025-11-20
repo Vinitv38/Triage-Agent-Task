@@ -74,10 +74,20 @@ def rule_based_priority(ticket: Ticket) -> str:
     # default
     return "medium"
 
-def build_triage_prompt(ticket, kb_text: str) -> str:
-    return TRIAGE_AGENT_PROMPT.format(
-        kb_text=kb_text,
-        subject=ticket.subject,
-        description=ticket.description,
-        customer_tier=ticket.customer_tier
-    )
+def build_triage_prompt(ticket: Ticket, kb_text: str) -> str:
+    """Build the triage prompt from the template."""
+    logger.debug("Building triage prompt for ticket subject=%s", ticket.subject or "<no-subject>")
+    try:
+        prompt = TRIAGE_AGENT_PROMPT.format(
+            kb_text=kb_text,
+            ticket=type('obj', (object,), {
+                'subject': ticket.subject or "<no-subject>",
+                'description': ticket.description or "<no-description>",
+                'customer_tier': ticket.customer_tier or "standard"
+            })()
+        )
+        logger.debug("Triage prompt built successfully, length=%d", len(prompt))
+        return prompt
+    except KeyError as e:
+        logger.error("Missing placeholder in TRIAGE_AGENT_PROMPT: %s", e)
+        raise
