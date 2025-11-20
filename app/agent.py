@@ -91,14 +91,13 @@ async def llm_triage(ticket: Ticket, kb_entries: List) -> dict:
     
     try:
         logger.info("Calling LLM for triage")
-        raw = await call_openai_chat(prompt)
-        logger.debug("Raw LLM output length=%d", len(raw) if raw else 0)
+        resp = await call_openai_chat(prompt)
+        logger.debug("LLM output length=%d", len(resp) if resp else 0)
         
         # Extract the first JSON object from the model output
-        m = re.search(r"\{[\s\S]*\}", raw)
-        if not m:
-            raise ValueError("No JSON found in LLM output.")
-        parsed = json.loads(m.group(0))
+        
+
+        parsed = resp
         logger.debug("Parsed LLM JSON: %s", parsed)
 
         # Ensure expected keys and types exist
