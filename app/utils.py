@@ -4,7 +4,6 @@ import uuid
 
 from .config import PRIORITY_KEYWORDS
 from .prompts import TRIAGE_AGENT_PROMPT
-from .models import Ticket
 
 
 # Logger Setup
@@ -29,32 +28,9 @@ def generate_request_id() -> str:
     return uuid.uuid4().hex[:8]
 
 
-# # -----------------------------------------------------
-# # Utility: simple timer context manager
-# # -----------------------------------------------------
-# class Timer:
-#     """
-#     Usage:
-#         with Timer() as t:
-#             ...do work...
-#         print(t.elapsed)  # seconds
-#     """
-#     def __enter__(self):
-#         self.start = time.time()
-#         return self
-
-#     @property
-#     def elapsed(self):
-#         return time.time() - self.start
-
-#     def __exit__(self, exc_type, exc, tb):
-#         pass
-
-
-def rule_based_category(ticket: Ticket) -> str:
+def rule_based_category(customer_query: str) -> str:
     """Very lightweight rule-based category detection."""
-    text = (ticket.subject or "") + " " + (ticket.description or "")
-    text = text.lower()
+    text = customer_query.lower()
     if any(w in text for w in ["bill", "charge", "refund", "invoice"]):
         return "billing"
     if any(w in text for w in ["password", "login", "account", "delete account"]):
@@ -63,10 +39,9 @@ def rule_based_category(ticket: Ticket) -> str:
         return "technical"
     return "other"
 
-def rule_based_priority(ticket: Ticket) -> str:
+def rule_based_priority(customer_query: str) -> str:
     """Simple priority detection using the PRIORITY_KEYWORDS map."""
-    text = (ticket.subject or "") + " " + (ticket.description or "")
-    text = text.lower()
+    text = customer_query.lower()
     for prio, keywords in PRIORITY_KEYWORDS.items():
         for kw in keywords:
             if kw in text:
@@ -74,17 +49,15 @@ def rule_based_priority(ticket: Ticket) -> str:
     # default
     return "medium"
 
-def build_triage_prompt(ticket: Ticket, kb_text: str) -> str:
+def build_triage_prompt(customer_query: str, kb_text: str) -> str:
     """Build the triage prompt from the template."""
-    logger.debug("Building triage prompt for ticket subject=%s", ticket.subject or "<no-subject>")
+    logger.debug("Building triage prompt for ticket subject: ", customer_query)
     try:
         prompt = TRIAGE_AGENT_PROMPT.format(
             kb_text=kb_text,
             ticket=type('obj', (object,), {
-                'subject': ticket.subject or "<no-subject>",
-                'description': ticket.description or "<no-description>",
-                'customer_tier': ticket.customer_tier or "standard"
-            })()
+                'description': customer_query,
+            })
         )
         logger.debug("Triage prompt built successfully, length=%d", len(prompt))
         return prompt

@@ -16,7 +16,7 @@ CATEGORY_TEAM_MAP = {
 
 # Priority rules by keywords (simple)
 PRIORITY_KEYWORDS = {
-    "urgent": ["outage", "down", "data loss", "emergency", "urgent"],
+    "critical": ["outage", "down", "data loss", "emergency", "urgent"],
     "high": ["charged twice", "duplicate charge", "refund", "crash", "security"],
     "medium": ["slow", "issue", "error", "fail"],
     "low": ["question", "how to", "help"]

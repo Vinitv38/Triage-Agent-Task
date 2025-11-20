@@ -1,10 +1,8 @@
 import json
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 import chromadb
-from chromadb.config import Settings
 from .models import KBEntry
-import os
 from .utils import logger
 
 KB_PATH = "data/knowledge_base.json"
@@ -67,15 +65,17 @@ class KnowledgeBase:
             query_texts=[query],
             n_results=top_k
         )
-        
+    
         # Convert results to KBEntry objects
         entries = []
         for i in range(len(results['ids'][0])):
+            if results['distances'][0][i] > 1.3:
+                break
             entry_data = {
                 'id': results['ids'][0][i],
                 'title': results['metadatas'][0][i]['title'],
                 'content': results['documents'][0][i],
-                'category': results['metadatas'][0][i]['category']
+                'category': results['metadatas'][0][i]['category'],
             }
             entries.append(KBEntry(**entry_data))
         

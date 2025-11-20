@@ -1,5 +1,11 @@
 [
-  {"id": "t1", "subject": "Charged twice for my subscription", "description": "I see two charges on my card this month for the same subscription. Please help!"},
-  {"id": "t2", "subject": "App crashes on start", "description": "After the latest update the app crashes immediately.", "customer_tier": "pro"},
-  {"id": "t3", "subject": "Need invoice for last month", "description": "Can I get an invoice for the subscription charged last month?", "customer_tier": "enterprise"}
+  {
+    "description": "Charged twice for my subscription. I see two charges on my card this month for the same subscription. Please help!"
+  },
+  {
+    "description": "App crashes on start. After the latest update the app crashes immediately."
+  },
+  {
+    "description": "Need invoice for last month. Can I get an invoice for the subscription charged last month?"
+  }
 ]

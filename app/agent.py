@@ -1,12 +1,9 @@
 # app/agent.py
 import json
-import re
 from typing import List
-
-from .prompts import TRIAGE_AGENT_PROMPT
-from .models import Ticket, TriageResult
+from .models import TriageResult
 from .kb import KnowledgeBase
-from .config import CATEGORY_TEAM_MAP, PRIORITY_KEYWORDS, GROQ_API_KEY, GROQ_MODEL
+from .config import CATEGORY_TEAM_MAP, GROQ_API_KEY, GROQ_MODEL
 from .utils import build_triage_prompt, logger, rule_based_category, rule_based_priority
 from groq import Groq
 
@@ -54,120 +51,125 @@ async def call_openai_chat(prompt: str) -> str:
     return content
 
 
-async def llm_triage(ticket: Ticket, kb_entries: List) -> dict:
+async def llm_triage(customer_query, kb_entries: List) -> dict:
     """
     Build a prompt and call the LLM. If no OPENAI_API_KEY, fall back to rules.
     Returns a dict with the keys needed to construct a TriageResult.
     """
-    logger.info("Starting triage for ticket subject=%s", (ticket.subject or "<no-subject>"))
+    logger.info("Starting triage for ticket subject: ", customer_query)
 
     # Fallback deterministic behavior when no API key is available:
     if not GROQ_API_KEY:
         logger.info("GROQ_API_KEY not configured — using rule-based triage")
         
-        category = rule_based_category(ticket)
-        priority = rule_based_priority(ticket)
+        category = rule_based_category(customer_query)
+        severity = rule_based_priority(customer_query)
         matched_ids = [e.id for e in kb_entries]
-        suggested_team = CATEGORY_TEAM_MAP.get(category, "support-general")
-        suggested_response = (
+        is_known_issue = False
+        # suggested_team = CATEGORY_TEAM_MAP.get(category, "support-general")
+        suggested_next_step = (
             f"Hi — thanks for reporting. We've classified this as {category}. "
-            f"Our {suggested_team} will follow up."
+            f"Our {suggested_next_step} will follow up."
         )
-        logger.debug("Rule-based triage result category=%s priority=%s matched_kb=%s", category, priority, matched_ids)
+        logger.debug(f"Rule-based triage result category: {category}, priority:{severity}, matched_kb: {matched_ids} ")
         
         return {
-            "category": category,
-            "priority": priority,
-            "suggested_team": suggested_team,
-            "matched_kb_article_ids": matched_ids,
-            "suggested_response": suggested_response,
-            "needs_human_review": True,
+            "summary": customer_query,
+            "category": severity,
+            "severity": severity,
+            "is_known_issue": is_known_issue,
+            "matched_kb_ids": matched_ids,
+            "suggested_next_step": suggested_next_step,
         }
 
     # Build the KB text (small; safe for 10-15 KB entries)
     kb_text = "\n\n".join([f"[{e.id}] {e.title}: {e.content}" for e in kb_entries])
-    prompt = build_triage_prompt(ticket, kb_text)
+    prompt = build_triage_prompt(customer_query, kb_text)
     logger.debug("Built triage prompt length=%d kb_entries=%d", len(prompt), len(kb_entries))
     
     try:
         logger.info("Calling LLM for triage")
         resp = await call_openai_chat(prompt)
+        
         logger.debug("LLM output length=%d", len(resp) if resp else 0)
         
         # Extract the first JSON object from the model output
-        
-
-        parsed = resp
-        logger.debug("Parsed LLM JSON: %s", parsed)
+        logger.debug("resp LLM JSON: %s", resp)
 
         # Ensure expected keys and types exist
-        parsed["matched_kb_article_ids"] = parsed.get("matched_kb_article_ids", [])
-        parsed["category"] = parsed.get("category", "other")
-        parsed["priority"] = parsed.get("priority", "medium")
-        parsed["suggested_team"] = parsed.get(
-            "suggested_team", CATEGORY_TEAM_MAP.get(parsed.get("category", "other"), "support-general")
+        resp["summary"] = resp.get("summary", "other")
+        resp["category"] = resp.get("category", "other")
+        resp["severity"] = resp.get("priority", "medium")
+        resp["suggested_next_step"] = resp.get(
+            "suggested_next_step", CATEGORY_TEAM_MAP.get(resp.get("category", "other"), "support-general")
         )
-        parsed["suggested_response"] = parsed.get("suggested_response", "We will investigate and get back to you.")
-        parsed["needs_human_review"] = bool(parsed.get("needs_human_review", True))
-
-        logger.info("LLM triage completed category=%s priority=%s needs_human_review=%s",
-                    parsed["category"], parsed["priority"], parsed["needs_human_review"])
         
-        return parsed
+        logger.info("LLM triage completed category=%s priority=%s",
+                    resp["category"], resp["severity"])
+        print('=========================')
+        print(resp)
+        print('=========================')
+        return resp
 
     except Exception as exc:
         # On any LLM failure, fallback to rules and log the error
-        logger.exception("LLM triage failed, falling back to rule-based triage: %s", exc)
-        category = rule_based_category(ticket)
-        priority = rule_based_priority(ticket)
+        category = rule_based_category(customer_query)
+        severity = rule_based_priority(customer_query)
         matched_ids = [e.id for e in kb_entries]
-        suggested_team = CATEGORY_TEAM_MAP.get(category, "support-general")
-        suggested_response = (
+        is_known_issue = False
+        suggested_next_step = (
             f"Hi — thanks for reporting. We've classified this as {category}. "
-            f"Our {suggested_team} will follow up."
+            f"Our {category} team will follow up."
         )
-        logger.debug("Fallback rule-based triage result category=%s priority=%s matched_kb=%s", category, priority, matched_ids)
+        logger.debug("Fallback rule-based triage result category=%s priority=%s matched_kb=%s", category, severity, matched_ids)
         return {
             "category": category,
-            "priority": priority,
-            "suggested_team": suggested_team,
-            "matched_kb_article_ids": matched_ids,
-            "suggested_response": suggested_response,
+            "severity": severity,
+            "matched_kb_ids": matched_ids,
+            "is_known_issue": is_known_issue,
+            "suggested_response": suggested_next_step,
             "needs_human_review": True,
         }
 
 
-async def triage_ticket(ticket: Ticket) -> TriageResult:
+async def triage_ticket(customer_query: str) -> TriageResult:
     """
     High-level triage flow:
     1. Retrieve top-k KB entries for the ticket.
     2. Ask the LLM (or fallback to rules) for structured triage output.
     3. Return a validated TriageResult object.
     """
-    logger.info("triage_ticket invoked for ticket subject=%s", (ticket.subject or "<no-subject>"))
+    logger.info("triage_ticket invoked for ticket subject: ",customer_query)
     
     # 1) retrieve KB
-    query = (ticket.subject or "") + " " + (ticket.description or "")
-    logger.debug("KB query: %s", query)
-    kb_entries = kb.search(query, top_k=3)
+    
+    logger.debug("KB query: %s", customer_query)
+    kb_entries = kb.search(customer_query, top_k=10)
+    if not kb_entries:
+        logger.info("No KB entries found for query.")
+        is_known_issue = False
+
+    else:
+        is_known_issue = True
+
     logger.info("KB search returned %d entries", len(kb_entries))
 
 
     # 2) ask LLM or fallback
-    parsed = await llm_triage(ticket, kb_entries)
+    resp = await llm_triage(customer_query, kb_entries)
+    print(resp)
 
     # 3) build TriageResult (ensure graceful defaults)
-    suggested_team = parsed.get("suggested_team") or CATEGORY_TEAM_MAP.get(parsed.get("category"), "support-general")
-    matched_ids = parsed.get("matched_kb_article_ids", [e.id for e in kb_entries])
+    matched_ids = resp.get("matched_kb_article_ids", [e.id for e in kb_entries])
 
     tr = TriageResult(
-        category=parsed.get("category", "other"),
-        priority=parsed.get("priority", "medium"),
-        suggested_team=suggested_team,
-        matched_kb_article_ids=matched_ids,
-        suggested_response=parsed.get("suggested_response", "We will investigate and get back to you."),
-        needs_human_review=parsed.get("needs_human_review", True),
+        summary=resp.get("summary", customer_query),
+        category=resp.get("category", "other"),
+        is_known_issue=is_known_issue,
+        severity=resp.get("severity", "medium"),
+        matched_kb_ids=matched_ids,
+        suggested_next_step=resp.get("suggested_next_step", "We will investigate and get back to you."),
     )
-    logger.info("TriageResult ready category=%s priority=%s suggested_team=%s", tr.category, tr.priority, tr.suggested_team)
+    logger.info("TriageResult ready category=%s priority=%s suggested_team=%s", tr.category, tr.severity, tr.suggested_next_step)
     
     return tr

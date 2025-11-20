@@ -1,11 +1,8 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-class Ticket(BaseModel):
-    id: Optional[str]
-    subject: str
+class QueryRequest(BaseModel):
     description: str
-    customer_tier: Optional[str] = None
 
 class KBEntry(BaseModel):
     id: int
@@ -14,9 +11,9 @@ class KBEntry(BaseModel):
     content: str
 
 class TriageResult(BaseModel):
+    summary: str
     category: str
-    priority: str
-    suggested_team: str
-    matched_kb_article_ids: List[int]
-    suggested_response: str
-    needs_human_review: bool
+    severity: str
+    is_known_issue: bool
+    matched_kb_ids: Optional[List[int]]
+    suggested_next_step: str
