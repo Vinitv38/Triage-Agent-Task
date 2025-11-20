@@ -25,8 +25,8 @@ async def call_openai_chat(prompt: str) -> str:
 
     if not GROQ_API_KEY:
         raise RuntimeError("OPENAI_API_KEY not configured")
-    # openai.api_key = OPENAI_API_KEY
 
+    logger.info("Starting triage for query=%s", (prompt or "<no-subject>"))
     resp = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=[{"role": "user", "content": prompt}],
@@ -36,7 +36,13 @@ async def call_openai_chat(prompt: str) -> str:
     )
 
     # The response structure: resp.choices[0].message.content
-    return resp.choices[0].message.content
+    try:
+        content = resp.choices[0].message.content
+        logger.debug("LLM response received (preview): %s", (content[:200] + "...") if content and len(content) > 200 else content)
+    except Exception:
+        logger.debug("LLM response received but could not extract preview.")
+        content = resp
+    return content
 
 
 async def llm_triage(ticket: Ticket, kb_entries: List) -> dict:
@@ -44,8 +50,12 @@ async def llm_triage(ticket: Ticket, kb_entries: List) -> dict:
     Build a prompt and call the LLM. If no OPENAI_API_KEY, fall back to rules.
     Returns a dict with the keys needed to construct a TriageResult.
     """
+    logger.info("Starting triage for ticket subject=%s", (ticket.subject or "<no-subject>"))
+
     # Fallback deterministic behavior when no API key is available:
     if not GROQ_API_KEY:
+        logger.info("GROQ_API_KEY not configured — using rule-based triage")
+        
         category = rule_based_category(ticket)
         priority = rule_based_priority(ticket)
         matched_ids = [e.id for e in kb_entries]
@@ -54,6 +64,8 @@ async def llm_triage(ticket: Ticket, kb_entries: List) -> dict:
             f"Hi — thanks for reporting. We've classified this as {category}. "
             f"Our {suggested_team} will follow up."
         )
+        logger.debug("Rule-based triage result category=%s priority=%s matched_kb=%s", category, priority, matched_ids)
+        
         return {
             "category": category,
             "priority": priority,
@@ -66,13 +78,19 @@ async def llm_triage(ticket: Ticket, kb_entries: List) -> dict:
     # Build the KB text (small; safe for 10-15 KB entries)
     kb_text = "\n\n".join([f"[{e.id}] {e.title}: {e.content}" for e in kb_entries])
     prompt = build_triage_prompt(ticket, kb_text)
+    logger.debug("Built triage prompt length=%d kb_entries=%d", len(prompt), len(kb_entries))
+    
     try:
-        raw = await call_openai_chat(TRIAGE_AGENT_PROMPT)
+        logger.info("Calling LLM for triage")
+        raw = await call_openai_chat(prompt)
+        logger.debug("Raw LLM output length=%d", len(raw) if raw else 0)
+        
         # Extract the first JSON object from the model output
         m = re.search(r"\{[\s\S]*\}", raw)
         if not m:
             raise ValueError("No JSON found in LLM output.")
         parsed = json.loads(m.group(0))
+        logger.debug("Parsed LLM JSON: %s", parsed)
 
         # Ensure expected keys and types exist
         parsed["matched_kb_article_ids"] = parsed.get("matched_kb_article_ids", [])
@@ -84,6 +102,9 @@ async def llm_triage(ticket: Ticket, kb_entries: List) -> dict:
         parsed["suggested_response"] = parsed.get("suggested_response", "We will investigate and get back to you.")
         parsed["needs_human_review"] = bool(parsed.get("needs_human_review", True))
 
+        logger.info("LLM triage completed category=%s priority=%s needs_human_review=%s",
+                    parsed["category"], parsed["priority"], parsed["needs_human_review"])
+        
         return parsed
 
     except Exception as exc:
@@ -97,6 +118,7 @@ async def llm_triage(ticket: Ticket, kb_entries: List) -> dict:
             f"Hi — thanks for reporting. We've classified this as {category}. "
             f"Our {suggested_team} will follow up."
         )
+        logger.debug("Fallback rule-based triage result category=%s priority=%s matched_kb=%s", category, priority, matched_ids)
         return {
             "category": category,
             "priority": priority,
@@ -114,9 +136,14 @@ async def triage_ticket(ticket: Ticket) -> TriageResult:
     2. Ask the LLM (or fallback to rules) for structured triage output.
     3. Return a validated TriageResult object.
     """
+    logger.info("triage_ticket invoked for ticket subject=%s", (ticket.subject or "<no-subject>"))
+    
     # 1) retrieve KB
     query = (ticket.subject or "") + " " + (ticket.description or "")
+    logger.debug("KB query: %s", query)
     kb_entries = kb.search(query, top_k=3)
+    logger.info("KB search returned %d entries", len(kb_entries))
+
 
     # 2) ask LLM or fallback
     parsed = await llm_triage(ticket, kb_entries)
@@ -133,4 +160,6 @@ async def triage_ticket(ticket: Ticket) -> TriageResult:
         suggested_response=parsed.get("suggested_response", "We will investigate and get back to you."),
         needs_human_review=parsed.get("needs_human_review", True),
     )
+    logger.info("TriageResult ready category=%s priority=%s suggested_team=%s", tr.category, tr.priority, tr.suggested_team)
+    
     return tr
