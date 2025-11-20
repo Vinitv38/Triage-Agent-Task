@@ -26,6 +26,7 @@ async def call_openai_chat(prompt: str) -> str:
     if not GROQ_API_KEY:
         raise RuntimeError("OPENAI_API_KEY not configured")
 
+    
     logger.info("Starting triage for query=%s", (prompt or "<no-subject>"))
     gen_res = client.chat.completions.create(
         model=GROQ_MODEL,
