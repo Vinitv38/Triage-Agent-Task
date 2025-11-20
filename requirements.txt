@@ -7,3 +7,4 @@ python-dotenv==1.0.0
 openai==0.27.8
 groq
 chromadb
+numpy<2.0.0
