@@ -5,7 +5,7 @@ import chromadb
 from chromadb.config import Settings
 from .models import KBEntry
 
-KB_PATH = "data/knowledge_base.json"
+KB_PATH = Path(__file__).parent.parent / "app/data/knowledge_base.json"
 
 class KnowledgeBase:
     def __init__(self, path: Path = KB_PATH):
