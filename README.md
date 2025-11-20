@@ -55,6 +55,7 @@ curl -sS -X POST https://triage-agent-task-production.up.railway.app/triage \
 ```
 
 ---
+![alt text](image.png)
 
 ## Testing
 - Add tests under `tests/` and run with:
