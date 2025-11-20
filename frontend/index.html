@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support Triage Agent</title>
+  <style>
+  :root {
+    --bg: #020617;
+    --card-bg: #020617;
+    --card-subtle: #020617;
+    --border-subtle: #1f2937;
+    --primary: #3b82f6;
+    --primary-soft: rgba(59, 130, 246, 0.15);
+    --accent: #22c55e;
+    --text: #e5e7eb;
+    --text-muted: #9ca3af;
+    --danger: #fecaca;
+    --radius-lg: 14px;
+    --radius-md: 10px;
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: var(--font-sans);
+    background: #020617;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    /* Slightly larger base size so everything feels less tiny */
+    font-size: 16px;
+  }
+
+  .page {
+    max-width: 1400px; /* a bit wider on large screens */
+    width: 100%;
+    margin: 0 auto;
+    padding: 28px 24px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1; /* take all remaining height */
+  }
+
+  header.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 4px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #111827;
+    border: 1px solid #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .brand-text-main {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .brand-text-sub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .env-tag {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 4px 10px;
+    border: 1px solid #1f2937;
+    background: #020617;
+    white-space: nowrap;
+  }
+
+  /* Main layout */
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 20px;
+    margin-top: 4px;
+    flex: 1;        /* take the remaining height */
+    min-height: 0;  /* allow children to shrink properly */
+  }
+
+  @media (max-width: 900px) {
+    .layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .panel {
+    background: #020617;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    padding: 20px 18px 20px;
+    display: flex;           /* stretch inner content vertically */
+    flex-direction: column;
+    min-height: 0;           /* for proper flex overflow handling */
+  }
+
+  /* Left panel: form */
+  .panel-header {
+    margin-bottom: 14px;
+  }
+
+  .panel-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+  }
+
+  .panel-subtitle {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .chip {
+    font-size: 0.8rem;
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+    color: var(--text-muted);
+    background: #020617;
+  }
+
+  form {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;           /* so the form stretches the panel */
+    min-height: 0;
+  }
+
+  label {
+    font-size: 0.84rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .field-wrapper {
+    margin-top: 4px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 220px; /* slightly taller */
+    resize: vertical;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    background: #020617;
+    color: var(--text);
+    padding: 12px 12px 14px;
+    font-size: 0.96rem;
+    font-family: var(--font-sans);
+    outline: none;
+    transition: border 0.16s ease, box-shadow 0.16s ease;
+  }
+
+  textarea::placeholder {
+    color: #6b7280;
+  }
+
+  textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.7);
+  }
+
+  .field-footer {
+    margin-top: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .shortcut {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .key {
+    border-radius: 4px;
+    border: 1px solid #374151;
+    padding: 1px 5px;
+    font-size: 0.74rem;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: auto; /* push actions row toward bottom */
+    padding-top: 8px;
+  }
+
+  .hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .hint-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  button {
+    border: none;
+    border-radius: 999px;
+    padding: 0.7rem 1.8rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #2563eb;
+    color: #f9fafb;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  button:hover:not(:disabled) {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+  }
+
+  button:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    background: #111827;
+    color: #6b7280;
+    cursor: not-allowed;
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 2px solid rgba(209, 213, 219, 0.25);
+    border-top-color: #e5e7eb;
+    animation: spin 0.9s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  .error {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--danger);
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(153, 27, 27, 0.18);
+    border: 1px solid rgba(248, 113, 113, 0.7);
+  }
+
+  /* Right panel: result */
+  .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .result-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+
+  .status-pill {
+    font-size: 0.8rem;
+    border-radius: 999px;
+    padding: 3px 10px;
+    border: 1px solid #1f2937;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+  }
+
+  .result-placeholder {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    padding: 8px 0 4px;
+  }
+
+  pre {
+    margin: 0;
+    margin-top: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: var(--text);
+    background: #020617;
+    border-radius: var(--radius-md);
+    border: 1px solid #1f2937;
+    padding: 10px 12px;
+    overflow-x: auto;
+    overflow-y: auto;
+    flex: 1;              /* grow to fill right panel height */
+    max-height: none;     /* let flexbox control height */
+    min-height: 180px;
+  }
+
+  .meta-row {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .meta-pill {
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+    padding: 2px 8px;
+  }
+</style>
+
+</head>
+<body>
+  <div class="page">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark">ST</div>
+        <div class="brand-text">
+          <span class="brand-text-main">Support Triage Agent</span>
+          <span class="brand-text-sub">AI-assisted ticket classification</span>
+        </div>
+      </div>
+      <div class="env-tag">Demo environment</div>
+    </header>
+
+    <main class="layout">
+      <!-- Left: input -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Ticket input</h2>
+          <p class="panel-subtitle">
+            Paste a customer ticket or incident description to classify priority,
+            intent, and routing.
+          </p>
+          <div class="chip-row">
+            <span class="chip">L1 / L2 handoff</span>
+            <span class="chip">Incident triage</span>
+            <span class="chip">Customer support queues</span>
+          </div>
+        </div>
+
+        <form id="triage-form">
+          <div>
+            <label for="ticket">Ticket or user message</label>
+            <div class="field-wrapper">
+              <textarea
+                id="ticket"
+                required
+                placeholder="Example: Our checkout API has been timing out for the last 30 minutes in production. EU customers can't place orders and we're seeing a spike in 5xx errors..."
+              ></textarea>
+            </div>
+            <div class="field-footer">
+              <div class="shortcut">
+                <span class="key">Ctrl</span>
+                <span>+</span>
+                <span class="key">Enter</span>
+                <span>Run triage</span>
+              </div>
+              <span>Plain text only</span>
+            </div>
+          </div>
+
+          <div class="actions">
+            <div class="hint">
+              <span class="hint-dot"></span>
+              <span>Typical response &lt; 2 seconds</span>
+            </div>
+            <button type="submit" id="submit-btn">
+              <span id="submit-label">Run triage</span>
+              <span id="submit-spinner" class="spinner hidden"></span>
+            </button>
+          </div>
+        </form>
+
+        <div id="error" class="error hidden"></div>
+      </section>
+
+      <!-- Right: output -->
+      <section class="panel">
+        <div class="result-header">
+          <span class="result-title">Classification result</span>
+          <span class="status-pill">
+            <span class="status-indicator"></span>
+            <span>API online</span>
+          </span>
+        </div>
+
+        <div id="result-placeholder" class="result-placeholder">
+          Submit a ticket on the left to view the structured triage output here.
+        </div>
+
+        <pre id="result" class="hidden"></pre>
+
+        <div id="meta-row" class="meta-row hidden">
+          <span id="meta-model" class="meta-pill"></span>
+          <span id="meta-latency" class="meta-pill"></span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const form = document.getElementById("triage-form");
+    const ticketEl = document.getElementById("ticket");
+    const resultEl = document.getElementById("result");
+    const resultPlaceholder = document.getElementById("result-placeholder");
+    const errorEl = document.getElementById("error");
+    const submitBtn = document.getElementById("submit-btn");
+    const submitLabel = document.getElementById("submit-label");
+    const submitSpinner = document.getElementById("submit-spinner");
+    const metaRow = document.getElementById("meta-row");
+    const metaModel = document.getElementById("meta-model");
+    const metaLatency = document.getElementById("meta-latency");
+
+    // Update this to your backend endpoint
+    const API_URL = "https://triage-agent-task-production.up.railway.app/triage";
+
+    function setLoading(isLoading) {
+      if (isLoading) {
+        submitBtn.disabled = true;
+        submitLabel.textContent = "Classifying…";
+        submitSpinner.classList.remove("hidden");
+      } else {
+        submitBtn.disabled = false;
+        submitLabel.textContent = "Run triage";
+        submitSpinner.classList.add("hidden");
+      }
+    }
+
+    function showError(message) {
+      errorEl.textContent = message;
+      errorEl.classList.remove("hidden");
+    }
+
+    function clearError() {
+      errorEl.textContent = "";
+      errorEl.classList.add("hidden");
+    }
+
+    function clearResult() {
+      resultEl.textContent = "";
+      resultEl.classList.add("hidden");
+      metaRow.classList.add("hidden");
+      resultPlaceholder.classList.remove("hidden");
+    }
+
+    function showResult(data, latencyMs) {
+      const pretty = JSON.stringify(data, null, 2);
+      resultEl.textContent = pretty;
+      resultEl.classList.remove("hidden");
+      resultPlaceholder.classList.add("hidden");
+
+      // Optional metadata
+      const modelName =
+        (data && (data.model || data.engine || data.provider)) ||
+        "Support Triage Engine";
+      metaModel.textContent = `Model: ${modelName}`;
+      metaLatency.textContent = `Latency: ${latencyMs.toFixed(0)} ms`;
+      metaRow.classList.remove("hidden");
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const text = ticketEl.value.trim();
+      if (!text) {
+        showError("Please paste a ticket or user message before running triage.");
+        return;
+      }
+
+      clearError();
+      clearResult();
+      setLoading(true);
+
+      const start = performance.now();
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ description: text }),
+        });
+
+        const latency = performance.now() - start;
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || `Request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        showResult(data, latency);
+      } catch (err) {
+        console.error(err);
+        showError("Triage failed: " + (err.message || "Unknown error"));
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // Ctrl+Enter shortcut
+    document.addEventListener("keydown", (e) => {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key === "Enter" &&
+        document.activeElement === ticketEl
+      ) {
+        form.requestSubmit();
+      }
+    });
+  </script>
+</body>
+</html>

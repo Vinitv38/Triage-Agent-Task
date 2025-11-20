@@ -6,6 +6,3 @@ __pycache__/
 **.env
 **test.ipynb
 *.pytest_cache/
-
-# UI files
-**index.html
