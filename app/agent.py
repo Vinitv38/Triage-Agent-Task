@@ -27,13 +27,21 @@ async def call_openai_chat(prompt: str) -> str:
         raise RuntimeError("OPENAI_API_KEY not configured")
 
     logger.info("Starting triage for query=%s", (prompt or "<no-subject>"))
-    resp = client.chat.completions.create(
+    gen_res = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.0,
         max_tokens=400,
-        response_format=TriageResult
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "Triage_Result",
+                "schema": TriageResult.model_json_schema()
+            }
+        }, 
     )
+    resp = TriageResult.model_validate(json.loads(gen_res.choices[0].message.content))
+    resp= resp.model_dump()
 
     # The response structure: resp.choices[0].message.content
     try:
