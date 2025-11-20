@@ -1,0 +1,12 @@
+[
+  {"id": 1, "category": "billing", "title": "Refund policy", "content": "We offer refunds within 14 days of purchase for monthly subscriptions. For yearly plans, prorated refunds may apply."},
+  {"id": 2, "category": "billing", "title": "Duplicate charge", "content": "If a customer is charged twice, verify transaction IDs and issue a refund for the duplicate charge after confirmation."},
+  {"id": 3, "category": "technical", "title": "App not loading", "content": "If the app fails to load, ask the user to clear app cache and restart the device. Collect logs if problem persists."},
+  {"id": 4, "category": "account", "title": "Password reset", "content": "Users can reset passwords using the 'Forgot password' link. If email not received, check spam and verify user email."},
+  {"id": 5, "category": "technical", "title": "API rate limit", "content": "If customers see rate-limit errors, suggest increasing plan or implementing exponential backoff retries."},
+  {"id": 6, "category": "billing", "title": "Invoice request", "content": "Provide invoices via the billing portal. For manual invoice requests, collect billing contact and company details."},
+  {"id": 7, "category": "account", "title": "Delete account", "content": "Account deletion requires email verification and confirmation. Backup data before deletion if requested."},
+  {"id": 8, "category": "technical", "title": "Feature not working", "content": "Gather reproduction steps, browser/device, and console logs. Try to reproduce on staging."},
+  {"id": 9, "category": "other", "title": "Sales inquiry", "content": "For pricing and enterprise inquiries, route to sales team and collect company size and use case."},
+  {"id": 10, "category": "billing", "title": "Refund timeline", "content": "Refunds typically show in 5-7 business days depending on bank processing times."}
+]

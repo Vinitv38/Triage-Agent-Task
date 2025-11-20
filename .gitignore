@@ -1,0 +1,7 @@
+# virtual environments
+.venv
+
+#test files
+__pycache__/
+**.env
+**test.ipynb
