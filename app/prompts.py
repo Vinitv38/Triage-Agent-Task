@@ -43,7 +43,7 @@ Your output MUST be valid JSON and match exactly this schema:
   "category": string,                        // One of: "Billing", "Login", "Performance", "Bug", "Question/How-To", "Account", "Other"
   "severity": string,                        // One of: "Low", "Medium", "High", "Critical"
   "is_known_issue": string,                  // True or False
-  "matched_kb_ids": string[],                // List of KB IDs example [1,5,9..]; empty list if is_know_issue is False
+  "matched_kb_ids": string[],                // List of KB IDs example [ISSUE-320, ]; empty list if is_know_issue is False
   "suggested_next_step": string,             // Clear recommended action to be taken next.
 }}
 

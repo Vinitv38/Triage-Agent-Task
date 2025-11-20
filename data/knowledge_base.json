@@ -1,12 +1,142 @@
 [
-  {"id": 1, "category": "billing", "title": "Refund policy", "content": "We offer refunds within 14 days of purchase for monthly subscriptions. For yearly plans, prorated refunds may apply."},
-  {"id": 2, "category": "billing", "title": "Duplicate charge", "content": "If a customer is charged twice, verify transaction IDs and issue a refund for the duplicate charge after confirmation."},
-  {"id": 3, "category": "technical", "title": "App not loading", "content": "If the app fails to load, ask the user to clear app cache and restart the device. Collect logs if problem persists."},
-  {"id": 4, "category": "account", "title": "Password reset", "content": "Users can reset passwords using the 'Forgot password' link. If email not received, check spam and verify user email."},
-  {"id": 5, "category": "technical", "title": "API rate limit", "content": "If customers see rate-limit errors, suggest increasing plan or implementing exponential backoff retries."},
-  {"id": 6, "category": "billing", "title": "Invoice request", "content": "Provide invoices via the billing portal. For manual invoice requests, collect billing contact and company details."},
-  {"id": 7, "category": "account", "title": "Delete account", "content": "Account deletion requires email verification and confirmation. Backup data before deletion if requested."},
-  {"id": 8, "category": "technical", "title": "Feature not working", "content": "Gather reproduction steps, browser/device, and console logs. Try to reproduce on staging."},
-  {"id": 9, "category": "other", "title": "Sales inquiry", "content": "For pricing and enterprise inquiries, route to sales team and collect company size and use case."},
-  {"id": 10, "category": "billing", "title": "Refund timeline", "content": "Refunds typically show in 5-7 business days depending on bank processing times."}
+  {
+    "id": "ISSUE-301",
+    "title": "User charged twice for annual plan",
+    "category": "Billing",
+    "symptoms": ["double billing", "subscription", "duplicate payment"],
+    "recommended_action": "Check Stripe logs; issue refund; notify billing team"
+  },
+  {
+    "id": "ISSUE-302",
+    "title": "OAuth login not working on Firefox",
+    "category": "Login",
+    "symptoms": ["OAuth failure", "Firefox", "login loop"],
+    "recommended_action": "Escalate to auth service; verify redirect URI"
+  },
+  {
+    "id": "ISSUE-303",
+    "title": "Dashboard graphs taking too long to load",
+    "category": "Performance",
+    "symptoms": ["slow dashboard", "charts loading", "API delay"],
+    "recommended_action": "Profile analytics API; check DB query performance"
+  },
+  {
+    "id": "ISSUE-304",
+    "title": "Reset password email not sent",
+    "category": "Bug",
+    "symptoms": ["email not sent", "password reset", "SMTP"],
+    "recommended_action": "Verify email worker queue; restart mail service"
+  },
+  {
+    "id": "ISSUE-305",
+    "title": "How to export user activity logs?",
+    "category": "Question/How-To",
+    "symptoms": ["export logs", "user activity", "admin query"],
+    "recommended_action": "Share documentation; guide user to admin panel"
+  },
+  {
+    "id": "ISSUE-306",
+    "title": "New employee requesting internal tool access",
+    "category": "Access",
+    "symptoms": ["role request", "permission denied"],
+    "recommended_action": "Assign engineering role; notify IT ops"
+  },
+  {
+    "id": "ISSUE-307",
+    "title": "Suspicious login attempts from unknown IP",
+    "category": "Security",
+    "symptoms": ["unknown IP", "multiple attempts", "security alert"],
+    "recommended_action": "Force password reset; notify security operations"
+  },
+  {
+    "id": "ISSUE-308",
+    "title": "Finance team needs automated weekly reports",
+    "category": "Feature Request",
+    "symptoms": ["report automation", "weekly summary", "finance request"],
+    "recommended_action": "Forward to product team; add to reporting backlog"
+  },
+  {
+    "id": "ISSUE-309",
+    "title": "CRM not syncing new customer entries",
+    "category": "Integration",
+    "symptoms": ["sync failure", "CRM", "API error"],
+    "recommended_action": "Check webhook logs; ensure partner endpoint is active"
+  },
+  {
+    "id": "ISSUE-310",
+    "title": "Invoice PDF showing wrong currency",
+    "category": "Billing",
+    "symptoms": ["wrong currency", "PDF invoice"],
+    "recommended_action": "Fix currency formatter; re-generate invoice"
+  },
+  {
+    "id": "ISSUE-311",
+    "title": "User session expires after 30 seconds",
+    "category": "Login",
+    "symptoms": ["session timeout", "cookie issue"],
+    "recommended_action": "Check session TTL; review load balancer sticky sessions"
+  },
+  {
+    "id": "ISSUE-312",
+    "title": "High CPU usage on recommendations service",
+    "category": "Performance",
+    "symptoms": ["high CPU", "slow responses", "backend overload"],
+    "recommended_action": "Scale recommender service; inspect model inference load"
+  },
+  {
+    "id": "ISSUE-313",
+    "title": "Mobile app crashes when applying coupon",
+    "category": "Bug",
+    "symptoms": ["app crash", "coupon", "mobile"],
+    "recommended_action": "Assign to mobile team; check coupon validation flow"
+  },
+  {
+    "id": "ISSUE-314",
+    "title": "How to archive old projects?",
+    "category": "Question/How-To",
+    "symptoms": ["archive projects", "user guide request"],
+    "recommended_action": "Share help docs; explain archive button in settings"
+  },
+  {
+    "id": "ISSUE-315",
+    "title": "Admin unable to remove user access",
+    "category": "Access",
+    "symptoms": ["remove access", "admin issue"],
+    "recommended_action": "Fix permission handler; verify RBAC configuration"
+  },
+  {
+    "id": "ISSUE-316",
+    "title": "Push notifications not delivered on Android",
+    "category": "Mobile",
+    "symptoms": ["notifications not received", "Android", "FCM"],
+    "recommended_action": "Check FCM token registration; validate push worker"
+  },
+  {
+    "id": "ISSUE-317",
+    "title": "Webhook returning 401 for partner API",
+    "category": "API",
+    "symptoms": ["401 unauthorized", "webhook", "partner API"],
+    "recommended_action": "Verify API key; rotate credentials if needed"
+  },
+  {
+    "id": "ISSUE-318",
+    "title": "Frontend UI overlaps on smaller screens",
+    "category": "UI/UX",
+    "symptoms": ["UI overlap", "responsive issue", "mobile layout"],
+    "recommended_action": "Fix CSS grid; test layout breakpoints"
+  },
+  {
+    "id": "ISSUE-319",
+    "title": "Deployment failed during pipeline build",
+    "category": "Deployment",
+    "symptoms": ["pipeline failure", "build error", "CI/CD"],
+    "recommended_action": "Check Docker build logs; retry deployment"
+  },
+  {
+    "id": "ISSUE-320",
+    "title": "Payment confirmation email delayed",
+    "category": "Payments",
+    "symptoms": ["delayed email", "payment confirmation"],
+    "recommended_action": "Check mail queue; confirm payment webhook processing"
+  }
 ]

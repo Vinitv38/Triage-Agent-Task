@@ -144,7 +144,7 @@ async def triage_ticket(customer_query: str) -> TriageResult:
     # 1) retrieve KB
     
     logger.debug("KB query: %s", customer_query)
-    kb_entries = kb.search(customer_query, top_k=10)
+    kb_entries = kb.search(customer_query, top_k=3)
     if not kb_entries:
         logger.info("No KB entries found for query.")
         is_known_issue = False
