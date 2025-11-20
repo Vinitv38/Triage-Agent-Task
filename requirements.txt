@@ -1,8 +1,6 @@
 fastapi
 uvicorn
 pydantic
-httpx
-pytest
 python-dotenv
 groq
 chromadb
