@@ -42,7 +42,7 @@ class KnowledgeBase:
                 documents=documents,
                 metadatas=metadatas
             )
-            self.client.persist()
+
     
     def search(self, query: str, top_k: int = 3) -> List[KBEntry]:
         """
